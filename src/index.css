@@ -1,0 +1,183 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f3f1ea;
+  --canvas: rgba(255, 253, 248, 0.88);
+  --sidebar: rgba(252, 250, 243, 0.92);
+  --sidebar-hover: rgba(26, 26, 26, 0.04);
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-muted: rgba(248, 245, 238, 0.9);
+  --text: #2b302c;
+  --text-strong: #17201a;
+  --text-soft: #66706a;
+  --text-muted: #7d867f;
+  --text-faint: #93a098;
+  --border-soft: rgba(43, 48, 44, 0.08);
+  --panel-shadow: 0 26px 60px rgba(53, 46, 33, 0.08);
+  --accent: #2f6a50;
+  --accent-soft: rgba(47, 106, 80, 0.12);
+  --accent-border: rgba(47, 106, 80, 0.25);
+  --accent-shadow: rgba(47, 106, 80, 0.26);
+  --avatar-shell: rgba(255, 255, 255, 0.76);
+  --danger: #d3485c;
+  --heat-0: #ece7df;
+  --heat-1: #dbe9df;
+  --heat-2: #b4d2bc;
+  --heat-3: #77b18b;
+  --heat-4: #2f6a50;
+}
+
+:root[data-theme-mode="dark"] {
+  --bg: #121719;
+  --canvas: rgba(20, 26, 28, 0.92);
+  --sidebar: rgba(24, 30, 33, 0.92);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --panel: rgba(23, 31, 33, 0.92);
+  --panel-muted: rgba(19, 25, 28, 0.92);
+  --text: #d9e3dc;
+  --text-strong: #f5fbf6;
+  --text-soft: #97a79f;
+  --text-muted: #aeb9b3;
+  --text-faint: #72817b;
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --panel-shadow: 0 26px 70px rgba(0, 0, 0, 0.36);
+  --avatar-shell: rgba(255, 255, 255, 0.08);
+  --heat-0: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme-color="forest"] {
+  --accent: #2f6a50;
+  --accent-soft: rgba(47, 106, 80, 0.14);
+  --accent-border: rgba(47, 106, 80, 0.28);
+  --accent-shadow: rgba(47, 106, 80, 0.3);
+  --heat-1: #dbe9df;
+  --heat-2: #b4d2bc;
+  --heat-3: #77b18b;
+  --heat-4: #2f6a50;
+}
+
+:root[data-theme-color="ocean"] {
+  --accent: #215e8a;
+  --accent-soft: rgba(33, 94, 138, 0.14);
+  --accent-border: rgba(33, 94, 138, 0.28);
+  --accent-shadow: rgba(33, 94, 138, 0.28);
+  --heat-1: #dbe6ef;
+  --heat-2: #bad0e1;
+  --heat-3: #6fa2c9;
+  --heat-4: #215e8a;
+}
+
+:root[data-theme-color="apricot"] {
+  --accent: #bf6c2e;
+  --accent-soft: rgba(191, 108, 46, 0.14);
+  --accent-border: rgba(191, 108, 46, 0.28);
+  --accent-shadow: rgba(191, 108, 46, 0.28);
+  --heat-1: #f0e1d3;
+  --heat-2: #e4c6a6;
+  --heat-3: #d69459;
+  --heat-4: #bf6c2e;
+}
+
+:root[data-theme-color="mist"] {
+  --accent: #5f6d75;
+  --accent-soft: rgba(95, 109, 117, 0.14);
+  --accent-border: rgba(95, 109, 117, 0.28);
+  --accent-shadow: rgba(95, 109, 117, 0.24);
+  --heat-1: #e4e7e9;
+  --heat-2: #c6cfd3;
+  --heat-3: #99acb5;
+  --heat-4: #5f6d75;
+}
+
+:root[data-theme-color="lavender"] {
+  --accent: #7f63b1;
+  --accent-soft: rgba(127, 99, 177, 0.16);
+  --accent-border: rgba(127, 99, 177, 0.28);
+  --accent-shadow: rgba(127, 99, 177, 0.24);
+  --heat-1: #ebe5f3;
+  --heat-2: #d1c3e5;
+  --heat-3: #a990cf;
+  --heat-4: #7f63b1;
+}
+
+:root[data-theme-color="rose"] {
+  --accent: #be5a76;
+  --accent-soft: rgba(190, 90, 118, 0.15);
+  --accent-border: rgba(190, 90, 118, 0.28);
+  --accent-shadow: rgba(190, 90, 118, 0.24);
+  --heat-1: #f2e3e8;
+  --heat-2: #e2bac7;
+  --heat-3: #d1859c;
+  --heat-4: #be5a76;
+}
+
+:root[data-theme-color="amber"] {
+  --accent: #b77b16;
+  --accent-soft: rgba(183, 123, 22, 0.15);
+  --accent-border: rgba(183, 123, 22, 0.28);
+  --accent-shadow: rgba(183, 123, 22, 0.25);
+  --heat-1: #f3e9d2;
+  --heat-2: #e6cf97;
+  --heat-3: #d7a84a;
+  --heat-4: #b77b16;
+}
+
+:root[data-font-size="small"] {
+  font-size: 14px;
+}
+
+:root[data-font-size="medium"] {
+  font-size: 16px;
+}
+
+:root[data-font-size="large"] {
+  font-size: 18px;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans SC", sans-serif;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 96%, white 4%), var(--bg));
+  color: var(--text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Noto Serif SC", serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+}
