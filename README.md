@@ -108,12 +108,11 @@ src/
   store/            Zustand 状态仓库
   types/            TypeScript 数据模型
   utils/            文案与日期工具
-.trae/documents/    正式 PRD 与技术架构文档
+.trae/documents/    项目需求文档
 ```
 
 ## 正式文档
 - 产品需求文档：`.trae/documents/个人事务管理软件-PRD.md`
-- 技术架构文档：`.trae/documents/个人事务管理软件-技术架构.md`
 
 ## 提交到 GitHub 前建议
 - 补充仓库简介和截图
