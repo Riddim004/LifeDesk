@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 runtime-data
+*.tar.gz
 
 # Editor directories and files
 .vscode/*
