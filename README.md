@@ -105,8 +105,8 @@ npm run build:desktop
 npm run start:desktop
 ```
 
-## Windows EXE 打包
-在 Windows 电脑上执行下面命令，可生成安装版 `EXE`：
+## Windows 安装版
+在 Windows 电脑上执行下面命令，可生成安装版 `Setup.exe`：
 
 ```bash
 npm install
@@ -119,10 +119,24 @@ npm run dist:win
 release/
 ```
 
-运行后的本地数据库默认保存在 Electron 的用户数据目录中，而不是仓库目录，例如：
+安装时可以把程序安装到例如：
 
 ```bash
-%APPDATA%/LifeDesk/runtime-data/lifedesk.sqlite
+D:\Apps\LifeDesk
+```
+
+桌面版运行后的本地数据库默认会优先写到：
+
+```bash
+D:\LifeDeskData\runtime-data\lifedesk.sqlite
+```
+
+如果 `D:` 盘不可用，才会回退到系统默认用户目录。
+
+如果你以后想自定义数据目录，也可以在启动前设置：
+
+```bash
+LIFEDESK_DATA_DIR=E:\MyLifeDeskData
 ```
 
 ## 常用命令

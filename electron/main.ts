@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog } from "electron";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { startLifeDeskServer, type LifeDeskServerHandle } from "../api/server.js";
@@ -11,6 +12,26 @@ const devServerUrl = process.env.LIFEDESK_ELECTRON_DEV_URL;
 let mainWindow: BrowserWindow | null = null;
 let serverHandle: LifeDeskServerHandle | null = null;
 
+function resolveDesktopRuntimeDir() {
+  const configuredDataDir = process.env.LIFEDESK_DATA_DIR?.trim();
+  if (configuredDataDir) {
+    return path.join(configuredDataDir, "runtime-data");
+  }
+
+  if (process.platform === "win32") {
+    const preferredBaseDir = "D:\\LifeDeskData";
+
+    try {
+      fs.mkdirSync(preferredBaseDir, { recursive: true });
+      return path.join(preferredBaseDir, "runtime-data");
+    } catch (error) {
+      console.warn(`Unable to use ${preferredBaseDir} for desktop data, falling back to userData.`, error);
+    }
+  }
+
+  return path.join(app.getPath("userData"), "runtime-data");
+}
+
 async function ensureServer() {
   if (devServerUrl) {
     return null;
@@ -20,7 +41,7 @@ async function ensureServer() {
     return serverHandle;
   }
 
-  const runtimeDir = path.join(app.getPath("userData"), "runtime-data");
+  const runtimeDir = resolveDesktopRuntimeDir();
   serverHandle = await startLifeDeskServer({
     host: "127.0.0.1",
     port: 0,
