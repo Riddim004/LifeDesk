@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.electron.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": ".",
+    "outDir": "build-electron",
+    "noEmit": false,
+    "sourceMap": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "api/**/*.ts",
+    "electron/**/*.ts",
+    "src/data/**/*.ts",
+    "src/types/**/*.ts"
+  ]
+}

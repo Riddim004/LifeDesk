@@ -1,4 +1,4 @@
-import type { Category, MoneyRecord, Person, Task, UserSettings } from "@/types/models";
+import type { Category, MoneyRecord, Person, Task, UserSettings } from "../types/models.js";
 
 const userId = "solo-user";
 const now = "2026-05-12T09:00:00.000Z";

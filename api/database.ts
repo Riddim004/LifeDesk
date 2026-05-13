@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { categories, defaultSettings, moneyRecords, persons, tasks } from "../src/data/seed";
-import type { Category, LifeDeskData, MoneyRecord, Person, Task, UserSettings } from "../src/types/models";
+import { categories, defaultSettings, moneyRecords, persons, tasks } from "../src/data/seed.js";
+import type { Category, LifeDeskData, MoneyRecord, Person, Task, UserSettings } from "../src/types/models.js";
 
 const userId = "solo-user";
 
@@ -387,8 +387,7 @@ export interface LifeDeskDatabase {
   reset: () => LifeDeskData;
 }
 
-export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
-  const runtimeDir = path.join(projectRoot, "runtime-data");
+export function createLifeDeskDatabase(runtimeDir: string): LifeDeskDatabase {
   const databaseFile = path.join(runtimeDir, "lifedesk.sqlite");
   const legacyDataFile = path.join(runtimeDir, "lifedesk.json");
 

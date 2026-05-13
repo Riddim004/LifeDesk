@@ -6,6 +6,7 @@ LifeDesk 是一个可以在个人电脑上独立运行的本地全栈个人事�
 - `React + Vite` 前端界面
 - `Node.js + Express` 本地后端
 - `runtime-data/lifedesk.sqlite` 本地 SQLite 持久化
+- `Electron` 桌面封装与 Windows `EXE` 打包能力
 
 也就是说，你从 GitHub 拉下来之后，只要按 README 启动，本地看到的功能就是一个真正前后端联动的桌面优先应用。
 
@@ -33,6 +34,7 @@ LifeDesk 是一个可以在个人电脑上独立运行的本地全栈个人事�
 - Vite
 - Express
 - Node.js 内置 `node:sqlite`
+- Electron
 - Zustand
 - Tailwind CSS
 - Vitest + Testing Library
@@ -77,16 +79,66 @@ npm run start
 http://localhost:8787
 ```
 
+## 桌面开发模式
+如果你想直接以桌面软件方式运行：
+
+```bash
+npm install
+npm run dev:desktop
+```
+
+这会同时启动：
+- Express 本地后端：`http://127.0.0.1:8787`
+- Vite 前端开发服务器：`http://127.0.0.1:5173`
+- Electron 桌面窗口
+
+## 桌面生产构建
+先生成桌面运行所需的前端和 Electron 构建产物：
+
+```bash
+npm run build:desktop
+```
+
+本地直接以桌面方式启动生产包：
+
+```bash
+npm run start:desktop
+```
+
+## Windows EXE 打包
+在 Windows 电脑上执行下面命令，可生成安装版 `EXE`：
+
+```bash
+npm install
+npm run dist:win
+```
+
+打包完成后，安装程序会出现在：
+
+```bash
+release/
+```
+
+运行后的本地数据库默认保存在 Electron 的用户数据目录中，而不是仓库目录，例如：
+
+```bash
+%APPDATA%/LifeDesk/runtime-data/lifedesk.sqlite
+```
+
 ## 常用命令
 ```bash
 npm run dev
 npm run server
 npm run dev:full
+npm run dev:desktop
 npm run check
 npm run lint
 npm test
 npm run build
+npm run build:desktop
 npm run start
+npm run start:desktop
+npm run dist:win
 ```
 
 ## 数据说明
