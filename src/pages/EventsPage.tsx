@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle2, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "@/components/common/Panel";
-import { useLifeDeskSnapshot, useLifeDeskStore, getEventGroups, getEventPendingCount, getTodayPriorities } from "@/store/useLifeDeskStore";
+import { useLifeDeskSnapshot, useLifeDeskStore, getCategoryById, getEventGroups, getEventPendingCount, getPersonById, getTodayPriorities } from "@/store/useLifeDeskStore";
 import { eventLabels, sharedCopy, t } from "@/utils/copy";
 import { formatShortDate } from "@/utils/date";
 
@@ -12,17 +12,19 @@ export default function EventsPage() {
   const completeTask = useLifeDeskStore((state) => state.completeTask);
   const snapshot = useLifeDeskSnapshot();
   const eventGroups = getEventGroups(snapshot);
-  const pendingTasks = getTodayPriorities(snapshot).filter((task) => task.moduleType === "event");
+  const pendingTasks = getTodayPriorities(snapshot);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("study");
+  const [personId, setPersonId] = useState("");
   const [dueAt, setDueAt] = useState("");
 
   const resetForm = () => {
     setTitle("");
     setDescription("");
     setCategoryId("study");
+    setPersonId("");
     setDueAt("");
   };
 
@@ -33,6 +35,7 @@ export default function EventsPage() {
 
     createTask({
       categoryId,
+      personId: personId || undefined,
       title: title.trim(),
       description: description.trim() || undefined,
       dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
@@ -47,7 +50,7 @@ export default function EventsPage() {
       <section className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
         <Panel
           title={language === "zh-CN" ? "事件工作台" : "Events Desk"}
-          subtitle={language === "zh-CN" ? "先看分类，再处理当下最重要的事情。" : "Move from category overview to the most important tasks."}
+          subtitle={language === "zh-CN" ? "所有事情都在这里汇总，人际事项也只是其中一种关联。" : "This is the single event pool, including tasks linked to people."}
           className="relative overflow-hidden"
           actions={
             <button
@@ -84,6 +87,21 @@ export default function EventsPage() {
                       {eventGroups.map((group) => (
                         <option key={group.id} value={group.id}>
                           {t(language, eventLabels[group.id])}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "关联人物" : "Related person"}</span>
+                    <select
+                      value={personId}
+                      onChange={(event) => setPersonId(event.target.value)}
+                      className="rounded-[18px] border border-[color:var(--border-soft)] bg-[color:var(--canvas)] px-4 py-3 text-sm text-[color:var(--text-strong)] outline-none transition focus:border-[color:var(--accent-border)]"
+                    >
+                      <option value="">{language === "zh-CN" ? "不关联人物" : "No person linked"}</option>
+                      {snapshot.persons.map((person) => (
+                        <option key={person.id} value={person.id}>
+                          {person.name}
                         </option>
                       ))}
                     </select>
@@ -153,7 +171,7 @@ export default function EventsPage() {
 
         <Panel
           title={language === "zh-CN" ? "今日重点" : "Today Focus"}
-          subtitle={language === "zh-CN" ? "把注意力留给最先到期的事情。" : "Keep attention on what expires first."}
+          subtitle={language === "zh-CN" ? "把注意力留给最先到期的事情，不区分它属于哪个入口。" : "Focus on what expires first, regardless of which view it comes from."}
         >
           <div className="space-y-3">
             {pendingTasks.slice(0, 4).map((task) => (
@@ -161,6 +179,10 @@ export default function EventsPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-[color:var(--text-strong)]">{task.title}</p>
+                    <p className="mt-2 text-xs text-[color:var(--text-soft)]">
+                      {(task.categoryId in eventLabels ? t(language, eventLabels[task.categoryId]) : getCategoryById(snapshot, task.categoryId)?.name || task.categoryId)}
+                      {task.personId ? ` · ${language === "zh-CN" ? "人物" : "Person"}：${getPersonById(snapshot, task.personId)?.name || task.personId}` : ""}
+                    </p>
                     <p className="mt-2 text-xs text-[color:var(--text-soft)]">{formatShortDate(task.dueAt || task.remindAt, language)}</p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -182,7 +204,7 @@ export default function EventsPage() {
 
       <Panel
         title={language === "zh-CN" ? "近期事件" : "Recent Events"}
-        subtitle={language === "zh-CN" ? "按照时间顺序快速扫一遍所有个人事务。" : "Scan personal tasks in time order."}
+        subtitle={language === "zh-CN" ? "按照时间顺序快速扫一遍所有事项，包括与人物有关的事情。" : "Scan all tasks in time order, including the ones tied to people."}
       >
         <div className="grid gap-4 lg:grid-cols-2">
           {pendingTasks.map((task) => (
@@ -190,7 +212,13 @@ export default function EventsPage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 text-[color:var(--accent)]" />
-                  <p className="text-sm font-semibold text-[color:var(--text-strong)]">{task.title}</p>
+                  <div>
+                    <p className="text-sm font-semibold text-[color:var(--text-strong)]">{task.title}</p>
+                    <p className="mt-1 text-xs text-[color:var(--text-soft)]">
+                      {(task.categoryId in eventLabels ? t(language, eventLabels[task.categoryId]) : getCategoryById(snapshot, task.categoryId)?.name || task.categoryId)}
+                      {task.personId ? ` · ${language === "zh-CN" ? "人物" : "Person"}：${getPersonById(snapshot, task.personId)?.name || task.personId}` : ""}
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"

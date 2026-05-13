@@ -28,8 +28,8 @@ type PersonRow = Omit<Person, "categoryId" | "avatarUrl" | "relationType" | "las
   contact_preference: string | null;
 };
 
-type TaskRow = Omit<Task, "moduleType" | "categoryId" | "personId" | "moneyRecordId" | "timeType" | "dueAt" | "startAt" | "remindAt" | "isDeleted" | "completedAt"> & {
-  module_type: Task["moduleType"];
+type TaskRow = Omit<Task, "categoryId" | "personId" | "moneyRecordId" | "timeType" | "dueAt" | "startAt" | "remindAt" | "isDeleted" | "completedAt"> & {
+  module_type: string;
   category_id: string;
   person_id: string | null;
   money_record_id: string | null;
@@ -101,7 +101,6 @@ const rowToTask = (row: TaskRow): Task => ({
   userId: row.userId,
   title: row.title,
   description: row.description ?? undefined,
-  moduleType: row.module_type,
   categoryId: row.category_id,
   personId: row.person_id ?? undefined,
   moneyRecordId: row.money_record_id ?? undefined,
@@ -115,6 +114,13 @@ const rowToTask = (row: TaskRow): Task => ({
   completedAt: row.completed_at ?? undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
+});
+
+const legacySocialCategoryIds = new Set(["family", "friends", "online"]);
+
+const normalizeTask = (task: Task): Task => ({
+  ...task,
+  categoryId: legacySocialCategoryIds.has(task.categoryId) ? "life" : task.categoryId,
 });
 
 const rowToMoneyRecord = (row: MoneyRecordRow): MoneyRecord => ({
@@ -309,25 +315,26 @@ function insertState(database: DatabaseSync, state: LifeDeskData) {
   }
 
   for (const task of state.tasks) {
+    const normalizedTask = normalizeTask(task);
     insertTask.run(
-      task.id,
-      task.userId,
-      task.title,
-      task.description ?? null,
-      task.moduleType,
-      task.categoryId,
-      task.personId ?? null,
-      task.moneyRecordId ?? null,
-      task.status,
-      task.priority,
-      task.timeType,
-      task.dueAt ?? null,
-      task.startAt ?? null,
-      task.remindAt ?? null,
-      task.isDeleted ? 1 : 0,
-      task.completedAt ?? null,
-      task.createdAt,
-      task.updatedAt,
+      normalizedTask.id,
+      normalizedTask.userId,
+      normalizedTask.title,
+      normalizedTask.description ?? null,
+      "event",
+      normalizedTask.categoryId,
+      normalizedTask.personId ?? null,
+      normalizedTask.moneyRecordId ?? null,
+      normalizedTask.status,
+      normalizedTask.priority,
+      normalizedTask.timeType,
+      normalizedTask.dueAt ?? null,
+      normalizedTask.startAt ?? null,
+      normalizedTask.remindAt ?? null,
+      normalizedTask.isDeleted ? 1 : 0,
+      normalizedTask.completedAt ?? null,
+      normalizedTask.createdAt,
+      normalizedTask.updatedAt,
     );
   }
 
@@ -369,12 +376,12 @@ export interface LifeDeskDatabase {
   updateSettings: (payload: Partial<UserSettings>) => UserSettings;
   createPerson: (payload: Partial<Person>) => Person;
   createTask: (
-    payload: Pick<Task, "id" | "title" | "moduleType" | "categoryId" | "status" | "priority" | "timeType" | "isDeleted" | "createdAt"> &
+    payload: Pick<Task, "id" | "title" | "categoryId" | "status" | "priority" | "timeType" | "isDeleted" | "createdAt"> &
       Partial<Pick<Task, "description" | "dueAt" | "remindAt" | "personId" | "moneyRecordId" | "completedAt">>,
   ) => Task;
   updateTask: (
     taskId: string,
-    payload: Partial<Pick<Task, "title" | "description" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>,
+    payload: Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>,
   ) => Task | null;
   completeTask: (taskId: string) => Task | null;
   reset: () => LifeDeskData;
@@ -398,6 +405,17 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
       insertState(database, initialState);
     });
   }
+
+  const migrateLegacyTaskModel = () => {
+    const now = new Date().toISOString();
+    database.prepare(`
+      UPDATE tasks
+      SET category_id = ?, module_type = 'event', updatedAt = ?
+      WHERE module_type = 'social' OR category_id IN ('family', 'friends', 'online')
+    `).run("life", now);
+  };
+
+  migrateLegacyTaskModel();
 
   const bootstrap = (): LifeDeskData => {
     const settingsRow = database.prepare(`
@@ -438,7 +456,7 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
       settings: rowToSettings(settingsRow),
       categories: categoryRows.map(rowToCategory),
       persons: personRows.map(rowToPerson),
-      tasks: taskRows.map(rowToTask),
+      tasks: taskRows.map(rowToTask).map(normalizeTask),
       moneyRecords: moneyRecordRows.map(rowToMoneyRecord),
     };
   };
@@ -512,20 +530,19 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
   };
 
   const createTask = (
-    payload: Pick<Task, "id" | "title" | "moduleType" | "categoryId" | "status" | "priority" | "timeType" | "isDeleted" | "createdAt"> &
+    payload: Pick<Task, "id" | "title" | "categoryId" | "status" | "priority" | "timeType" | "isDeleted" | "createdAt"> &
       Partial<Pick<Task, "description" | "dueAt" | "remindAt" | "personId" | "moneyRecordId" | "completedAt">>,
   ): Task => {
-    if (!payload.id || !payload.title || !payload.categoryId || !payload.moduleType) {
+    if (!payload.id || !payload.title || !payload.categoryId) {
       throw new Error("invalid_task_payload");
     }
 
     const now = new Date().toISOString();
-    const nextTask: Task = {
+    const nextTask = normalizeTask({
       id: payload.id,
       userId,
       title: payload.title,
       description: payload.description,
-      moduleType: payload.moduleType,
       categoryId: payload.categoryId,
       personId: payload.personId,
       moneyRecordId: payload.moneyRecordId,
@@ -538,7 +555,7 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
       completedAt: payload.completedAt,
       createdAt: payload.createdAt || now,
       updatedAt: now,
-    };
+    });
 
     database.prepare(`
       INSERT INTO tasks (id, userId, title, description, module_type, category_id, person_id, money_record_id, status, priority, time_type, due_at, start_at, remind_at, is_deleted, completed_at, createdAt, updatedAt)
@@ -548,7 +565,7 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
       nextTask.userId,
       nextTask.title,
       nextTask.description ?? null,
-      nextTask.moduleType,
+      "event",
       nextTask.categoryId,
       nextTask.personId ?? null,
       nextTask.moneyRecordId ?? null,
@@ -569,7 +586,7 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
 
   const updateTask = (
     taskId: string,
-    payload: Partial<Pick<Task, "title" | "description" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>,
+    payload: Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>,
   ): Task | null => {
     const currentRow = database.prepare(`
       SELECT id, userId, title, description, module_type, category_id, person_id, money_record_id, status, priority, time_type, due_at, start_at, remind_at, is_deleted, completed_at, createdAt, updatedAt
@@ -581,20 +598,22 @@ export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
       return null;
     }
 
-    const current = rowToTask(currentRow);
-    const nextTask: Task = {
+    const current = normalizeTask(rowToTask(currentRow));
+    const nextTask = normalizeTask({
       ...current,
       ...payload,
       updatedAt: new Date().toISOString(),
-    };
+    });
 
     database.prepare(`
       UPDATE tasks
-      SET title = ?, description = ?, status = ?, priority = ?, due_at = ?, remind_at = ?, is_deleted = ?, completed_at = ?, updatedAt = ?
+      SET title = ?, description = ?, category_id = ?, person_id = ?, status = ?, priority = ?, due_at = ?, remind_at = ?, is_deleted = ?, completed_at = ?, updatedAt = ?
       WHERE id = ?
     `).run(
       nextTask.title,
       nextTask.description ?? null,
+      nextTask.categoryId,
+      nextTask.personId ?? null,
       nextTask.status,
       nextTask.priority,
       nextTask.dueAt ?? null,

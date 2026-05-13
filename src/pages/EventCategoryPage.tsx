@@ -2,7 +2,7 @@ import { CheckCircle2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Panel } from "@/components/common/Panel";
-import { useLifeDeskSnapshot, useLifeDeskStore, getCategoryById, getTasksByEventCategory } from "@/store/useLifeDeskStore";
+import { useLifeDeskSnapshot, useLifeDeskStore, getCategoryById, getPersonById, getTasksByEventCategory } from "@/store/useLifeDeskStore";
 import { eventLabels, t } from "@/utils/copy";
 import { formatDate } from "@/utils/date";
 
@@ -17,6 +17,7 @@ export default function EventCategoryPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [personId, setPersonId] = useState("");
   const [dueAt, setDueAt] = useState("");
 
   const label = useMemo(() => {
@@ -33,6 +34,7 @@ export default function EventCategoryPage() {
 
     createTask({
       categoryId,
+      personId: personId || undefined,
       title: title.trim(),
       description: description.trim() || undefined,
       dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
@@ -40,6 +42,7 @@ export default function EventCategoryPage() {
 
     setTitle("");
     setDescription("");
+    setPersonId("");
     setDueAt("");
     setIsCreateOpen(false);
   };
@@ -48,7 +51,7 @@ export default function EventCategoryPage() {
     <div className="flex h-full flex-col gap-6 overflow-auto">
       <Panel
         title={`${language === "zh-CN" ? "事件分类" : "Event Category"} · ${label}`}
-        subtitle={language === "zh-CN" ? "这里专门看事，不混入人际浏览逻辑。" : "This view stays task-first, without social navigation noise."}
+        subtitle={language === "zh-CN" ? "这里只按事件分类看事；如果关联了人物，也会一起出现。" : "This view groups by event category, while still showing linked people."}
         actions={
           <button
             type="button"
@@ -82,6 +85,21 @@ export default function EventCategoryPage() {
                   />
                 </label>
                 <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "关联人物" : "Related person"}</span>
+                  <select
+                    value={personId}
+                    onChange={(event) => setPersonId(event.target.value)}
+                    className="rounded-[18px] border border-[color:var(--border-soft)] bg-[color:var(--canvas)] px-4 py-3 text-sm text-[color:var(--text-strong)] outline-none transition focus:border-[color:var(--accent-border)]"
+                  >
+                    <option value="">{language === "zh-CN" ? "不关联人物" : "No person linked"}</option>
+                    {snapshot.persons.map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-2">
                   <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "截止时间" : "Due time"}</span>
                   <input
                     type="datetime-local"
@@ -104,6 +122,7 @@ export default function EventCategoryPage() {
                   onClick={() => {
                     setTitle("");
                     setDescription("");
+                    setPersonId("");
                     setDueAt("");
                     setIsCreateOpen(false);
                   }}
@@ -123,6 +142,11 @@ export default function EventCategoryPage() {
                 <div>
                   <p className="text-base font-semibold text-[color:var(--text-strong)]">{task.title}</p>
                   {task.description ? <p className="mt-2 text-sm text-[color:var(--text-soft)]">{task.description}</p> : null}
+                  {task.personId ? (
+                    <p className="mt-2 text-xs text-[color:var(--text-soft)]">
+                      {language === "zh-CN" ? "关联人物" : "Related person"}：{getPersonById(snapshot, task.personId)?.name || task.personId}
+                    </p>
+                  ) : null}
                 </div>
                 <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent)]">{task.priority}</span>
               </div>

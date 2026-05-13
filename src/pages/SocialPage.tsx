@@ -50,7 +50,7 @@ export default function SocialPage() {
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Panel
           title={language === "zh-CN" ? "人际" : "Social"}
-          subtitle={language === "zh-CN" ? "先看到谁，再进入这个人身上的事情。" : "See who needs you first, then enter that person's open threads."}
+          subtitle={language === "zh-CN" ? "这是事件池的人际视角，先看到谁，再进入这个人相关的事情。" : "This is the people view of the shared task pool: see who needs you, then open their threads."}
           actions={
             <button
               type="button"
@@ -179,7 +179,7 @@ export default function SocialPage() {
           </div>
         </Panel>
 
-        <Panel title={t(language, sharedCopy.recentReminder)} subtitle={language === "zh-CN" ? "提醒依旧保留，但入口仍然以人物为主。" : "Reminders stay visible, but the entry remains people-first."}>
+        <Panel title={t(language, sharedCopy.recentReminder)} subtitle={language === "zh-CN" ? "这里展示的是同一批事件里的近期人物提醒。" : "These reminders come from the same shared task pool."}>
           <div className="space-y-3">
             {reminders.map((entry) => (
               <div key={entry.person.id} className="rounded-[22px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4">
@@ -210,7 +210,7 @@ export default function SocialPage() {
         </div>
       </Panel>
 
-      <Panel title={language === "zh-CN" ? "关系摘要" : "Relationship Summary"} subtitle={language === "zh-CN" ? "人际模块永远围绕‘谁有事’展开。" : "The social module always revolves around who needs attention."}>
+      <Panel title={language === "zh-CN" ? "关系摘要" : "Relationship Summary"} subtitle={language === "zh-CN" ? "这里只换了查看方式，没有再单独维护一套人际事务。" : "This is only a different lens, not a separate social task system."}>
         <div className="grid gap-4 md:grid-cols-3">
           {relationGroups.map((group) => {
             const count = getPendingCountByRelation(snapshot, group.id);

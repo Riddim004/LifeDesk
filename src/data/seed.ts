@@ -35,18 +35,18 @@ export const persons: Person[] = [
 ];
 
 export const tasks: Task[] = [
-  { id: "t-study-1", userId, title: "准备英语考试大纲", moduleType: "event", categoryId: "study", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-13T08:00:00.000Z", remindAt: "2026-05-12T22:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-study-2", userId, title: "提交课程作业", moduleType: "event", categoryId: "study", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-14T15:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-career-1", userId, title: "更新项目简历", moduleType: "event", categoryId: "career", status: "pending", priority: "high", timeType: "range_time", dueAt: "2026-05-15T12:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-life-1", userId, title: "预约体检", moduleType: "event", categoryId: "life", status: "pending", priority: "medium", timeType: "relative_time", dueAt: "2026-05-18T09:30:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-mom-1", userId, title: "提醒买生日蛋糕", moduleType: "social", categoryId: "family", personId: "mom", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-13T10:00:00.000Z", remindAt: "2026-05-12T18:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-mom-2", userId, title: "帮忙预约体检", moduleType: "social", categoryId: "family", personId: "mom", status: "pending", priority: "medium", timeType: "range_time", dueAt: "2026-05-20T09:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-dad-1", userId, title: "周末打电话确认体检", moduleType: "social", categoryId: "family", personId: "dad", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-17T10:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-xiaolin-1", userId, title: "提醒还书", moduleType: "social", categoryId: "friends", personId: "xiaolin", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-13T16:30:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-ajie-1", userId, title: "发合作资料", moduleType: "social", categoryId: "friends", personId: "ajie", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-12T15:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-ajie-2", userId, title: "确认聚餐时间", moduleType: "social", categoryId: "friends", personId: "ajie", status: "completed", priority: "low", timeType: "exact_time", dueAt: "2026-05-11T18:00:00.000Z", isDeleted: false, completedAt: "2026-05-11T19:00:00.000Z", createdAt: now, updatedAt: now },
-  { id: "t-net-1", userId, title: "回复合作消息", moduleType: "social", categoryId: "online", personId: "net-a", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-14T09:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
-  { id: "t-net-2", userId, title: "整理线上交流纪要", moduleType: "social", categoryId: "online", personId: "net-a", status: "pending", priority: "medium", timeType: "range_time", dueAt: "2026-05-16T11:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-study-1", userId, title: "准备英语考试大纲", categoryId: "study", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-13T08:00:00.000Z", remindAt: "2026-05-12T22:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-study-2", userId, title: "提交课程作业", categoryId: "study", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-14T15:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-career-1", userId, title: "更新项目简历", categoryId: "career", status: "pending", priority: "high", timeType: "range_time", dueAt: "2026-05-15T12:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-life-1", userId, title: "预约体检", categoryId: "life", status: "pending", priority: "medium", timeType: "relative_time", dueAt: "2026-05-18T09:30:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-mom-1", userId, title: "提醒买生日蛋糕", categoryId: "life", personId: "mom", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-13T10:00:00.000Z", remindAt: "2026-05-12T18:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-mom-2", userId, title: "帮忙预约体检", categoryId: "life", personId: "mom", status: "pending", priority: "medium", timeType: "range_time", dueAt: "2026-05-20T09:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-dad-1", userId, title: "周末打电话确认体检", categoryId: "life", personId: "dad", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-17T10:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-xiaolin-1", userId, title: "提醒还书", categoryId: "study", personId: "xiaolin", status: "pending", priority: "medium", timeType: "exact_time", dueAt: "2026-05-13T16:30:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-ajie-1", userId, title: "发合作资料", categoryId: "career", personId: "ajie", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-12T15:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-ajie-2", userId, title: "确认聚餐时间", categoryId: "life", personId: "ajie", status: "completed", priority: "low", timeType: "exact_time", dueAt: "2026-05-11T18:00:00.000Z", isDeleted: false, completedAt: "2026-05-11T19:00:00.000Z", createdAt: now, updatedAt: now },
+  { id: "t-net-1", userId, title: "回复合作消息", categoryId: "career", personId: "net-a", status: "pending", priority: "high", timeType: "exact_time", dueAt: "2026-05-14T09:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
+  { id: "t-net-2", userId, title: "整理线上交流纪要", categoryId: "career", personId: "net-a", status: "pending", priority: "medium", timeType: "range_time", dueAt: "2026-05-16T11:00:00.000Z", isDeleted: false, createdAt: now, updatedAt: now },
 ];
 
 export const moneyRecords: MoneyRecord[] = [

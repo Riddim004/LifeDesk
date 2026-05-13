@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Panel } from "@/components/common/Panel";
-import { useLifeDeskSnapshot, useLifeDeskStore, getCategoryById, getTaskById } from "@/store/useLifeDeskStore";
+import { useLifeDeskSnapshot, useLifeDeskStore, getCategoryById, getEventGroups, getPersonById, getTaskById } from "@/store/useLifeDeskStore";
 import { eventLabels, t } from "@/utils/copy";
 import { formatDate } from "@/utils/date";
 
@@ -14,9 +14,13 @@ export default function EventTaskPage() {
   const snapshot = useLifeDeskSnapshot();
   const task = getTaskById(snapshot, taskId);
   const category = task ? getCategoryById(snapshot, task.categoryId) : undefined;
+  const eventGroups = getEventGroups(snapshot);
+  const linkedPerson = task?.personId ? getPersonById(snapshot, task.personId) : undefined;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState("study");
+  const [personId, setPersonId] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [status, setStatus] = useState<"pending" | "completed" | "cancelled">("pending");
   const [dueAt, setDueAt] = useState("");
@@ -28,6 +32,8 @@ export default function EventTaskPage() {
 
     setTitle(task.title);
     setDescription(task.description || "");
+    setCategoryId(task.categoryId);
+    setPersonId(task.personId || "");
     setPriority(task.priority);
     setStatus(task.status);
     setDueAt(task.dueAt ? task.dueAt.slice(0, 16) : "");
@@ -62,6 +68,8 @@ export default function EventTaskPage() {
     updateTask(task.id, {
       title,
       description,
+      categoryId,
+      personId: personId || undefined,
       priority,
       status,
       dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
@@ -76,8 +84,8 @@ export default function EventTaskPage() {
           title={language === "zh-CN" ? "事件详情与编辑" : "Event Task Editor"}
           subtitle={
             language === "zh-CN"
-              ? "这里可以修改已有事件的标题、说明、优先级、状态和时间。"
-              : "Edit title, notes, priority, status, and timing here."
+              ? "这里可以修改标题、分类、关联人物、优先级、状态和时间。"
+              : "Edit title, category, linked person, priority, status, and timing here."
           }
         >
           <div className="grid gap-5">
@@ -101,6 +109,37 @@ export default function EventTaskPage() {
             </label>
 
             <div className="grid gap-4 md:grid-cols-3">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "分类" : "Category"}</span>
+                <select
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                  className="rounded-[18px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-4 py-3 text-sm text-[color:var(--text-strong)] outline-none transition focus:border-[color:var(--accent-border)]"
+                >
+                  {eventGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {t(language, eventLabels[group.id])}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "关联人物" : "Related person"}</span>
+                <select
+                  value={personId}
+                  onChange={(event) => setPersonId(event.target.value)}
+                  className="rounded-[18px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-4 py-3 text-sm text-[color:var(--text-strong)] outline-none transition focus:border-[color:var(--accent-border)]"
+                >
+                  <option value="">{language === "zh-CN" ? "不关联人物" : "No person linked"}</option>
+                  {snapshot.persons.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "优先级" : "Priority"}</span>
                 <select
@@ -143,7 +182,7 @@ export default function EventTaskPage() {
                 type="button"
                 onClick={() => {
                   completeTask(task.id);
-                  navigate(`/events/${task.categoryId}`);
+                  navigate(`/events/${categoryId}`);
                 }}
                 className="rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_var(--accent-shadow)]"
               >
@@ -158,7 +197,7 @@ export default function EventTaskPage() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate(`/events/${task.categoryId}`)}
+                onClick={() => navigate(`/events/${categoryId}`)}
                 className="rounded-full border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-5 py-3 text-sm font-semibold text-[color:var(--text-strong)]"
               >
                 {language === "zh-CN" ? "返回分类页" : "Back to Category"}
@@ -174,7 +213,11 @@ export default function EventTaskPage() {
           <div className="space-y-4 rounded-[24px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-5 text-sm text-[color:var(--text-soft)]">
             <p>
               <span className="font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "分类" : "Category"}：</span>
-              {categoryLabel}
+              {task.categoryId === categoryId ? categoryLabel : (categoryId in eventLabels ? t(language, eventLabels[categoryId]) : getCategoryById(snapshot, categoryId)?.name || categoryId)}
+            </p>
+            <p>
+              <span className="font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "关联人物" : "Related person"}：</span>
+              {personId ? snapshot.persons.find((person) => person.id === personId)?.name || personId : (language === "zh-CN" ? "未关联" : "None")}
             </p>
             <p>
               <span className="font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "当前标题" : "Current Title"}：</span>
@@ -188,6 +231,12 @@ export default function EventTaskPage() {
               <span className="font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "当前时间" : "Current Time"}：</span>
               {formatDate(task.dueAt || task.remindAt, language)}
             </p>
+            {linkedPerson ? (
+              <p>
+                <span className="font-semibold text-[color:var(--text-strong)]">{language === "zh-CN" ? "原关联人物" : "Original linked person"}：</span>
+                {linkedPerson.name}
+              </p>
+            ) : null}
             <p className="rounded-[18px] bg-[color:var(--canvas)] px-4 py-4 leading-7">
               {description || task.description || (language === "zh-CN" ? "还没有填写说明。" : "No description yet.")}
             </p>

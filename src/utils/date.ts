@@ -60,8 +60,8 @@ export function buildCalendarSummary(
     .filter((task) => !task.isDeleted)
     .filter((task) => {
       if (filter === "all") return true;
-      if (filter === "event") return task.moduleType === "event";
-      if (filter === "social") return task.moduleType === "social";
+      if (filter === "event") return !task.personId;
+      if (filter === "social") return Boolean(task.personId);
       return Boolean(task.moneyRecordId);
     })
     .forEach((task) => {
@@ -82,7 +82,6 @@ export function buildCalendarSummary(
       .map((task) => ({
         taskId: task.id,
         title: task.title,
-        moduleType: task.moduleType,
         categoryName: categoryNameById[task.categoryId] || "",
         personName: task.personId ? personNameById[task.personId] : undefined,
         status: task.status,

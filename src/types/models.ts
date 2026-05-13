@@ -20,7 +20,6 @@ export type CategoryType =
 
 export type TaskStatus = "pending" | "completed" | "cancelled";
 export type TaskTimeType = "exact_time" | "relative_time" | "long_term" | "range_time";
-export type TaskModuleType = "event" | "social";
 export type MoneyType = "income" | "expense";
 
 export interface UserSettings {
@@ -68,7 +67,6 @@ export interface Task {
   userId: string;
   title: string;
   description?: string;
-  moduleType: TaskModuleType;
   categoryId: string;
   personId?: string;
   moneyRecordId?: string;
@@ -107,7 +105,6 @@ export interface CalendarDaySummary {
   items: Array<{
     taskId: string;
     title: string;
-    moduleType: TaskModuleType;
     categoryName: string;
     personName?: string;
     status: TaskStatus;

@@ -29,13 +29,14 @@ interface LifeDeskState {
   }) => string;
   createTask: (payload: {
     categoryId: string;
+    personId?: string;
     title: string;
     description?: string;
     priority?: "low" | "medium" | "high";
     dueAt?: string;
   }) => string;
   completeTask: (taskId: string) => void;
-  updateTask: (taskId: string, payload: Partial<Pick<Task, "title" | "description" | "priority" | "status" | "dueAt" | "remindAt">>) => void;
+  updateTask: (taskId: string, payload: Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt">>) => void;
   resetDemo: () => void;
 }
 
@@ -127,8 +128,8 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
       userId: "solo-user",
       title: payload.title,
       description: payload.description,
-      moduleType: "event",
       categoryId: payload.categoryId,
+      personId: payload.personId,
       status: "pending",
       priority: payload.priority || "medium",
       timeType: payload.dueAt ? "exact_time" : "long_term",
@@ -150,8 +151,8 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
       id: nextTask.id,
       title: nextTask.title,
       description: nextTask.description,
-      moduleType: nextTask.moduleType,
       categoryId: nextTask.categoryId,
+      personId: nextTask.personId,
       status: nextTask.status,
       priority: nextTask.priority,
       timeType: nextTask.timeType,
@@ -183,7 +184,7 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
   },
   updateTask: (taskId, payload) => {
     let nextTaskPayload:
-      | Partial<Pick<Task, "title" | "description" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>
+      | Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>
       | undefined;
     set((state) => ({
       tasks: state.tasks.map((task) => {
@@ -303,7 +304,7 @@ export const getPeopleBoard = (state: DemoState) =>
 
 export const getTasksByEventCategory = (state: DemoState, categoryId: string) =>
   state.tasks
-    .filter((task) => task.categoryId === categoryId && task.moduleType === "event" && !task.isDeleted)
+    .filter((task) => task.categoryId === categoryId && !task.isDeleted)
     .sort((left, right) => compareByDate(getTaskEventDate(left), getTaskEventDate(right)));
 
 export const getTaskById = (state: DemoState, taskId: string) => state.tasks.find((task) => task.id === taskId);

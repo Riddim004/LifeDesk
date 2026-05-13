@@ -28,6 +28,19 @@ describe("事件模块编辑能力", () => {
     expect(screen.getAllByText("点进来编辑这个事件").length).toBeGreaterThan(0);
   });
 
+  it("关联到人物的事项也会出现在对应事件分类里", () => {
+    render(
+      <MemoryRouter initialEntries={["/events/career"]}>
+        <Routes>
+          <Route path="/events/:categoryId" element={<EventCategoryPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("发合作资料")).toBeInTheDocument();
+    expect(screen.getByText("关联人物：阿杰")).toBeInTheDocument();
+  });
+
   it("允许更新已有事件的标题和状态", () => {
     useLifeDeskStore.getState().updateTask("t-study-1", {
       title: "新的英语考试计划",

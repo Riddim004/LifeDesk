@@ -42,7 +42,7 @@ export default function PersonPage() {
           </div>
         </Panel>
 
-        <Panel title={t(language, sharedCopy.currentTodo)} subtitle={language === "zh-CN" ? "像消息一样，一条条点掉它们。" : "Treat each one like an unread thread and clear it."}>
+        <Panel title={t(language, sharedCopy.currentTodo)} subtitle={language === "zh-CN" ? "这里看到的事项也都会同步出现在事件总览里。" : "These tasks also appear in the shared events overview."}>
           <div className="space-y-3">
             {pendingTasks.map((task) => (
               <TaskRow key={task.id} task={task} language={language} onComplete={completeTask} />
@@ -52,7 +52,7 @@ export default function PersonPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Panel title={t(language, sharedCopy.completed)} subtitle={language === "zh-CN" ? "完成后从待办中退出，但仍然能回看。" : "Completed items leave the queue but stay visible in history."}>
+        <Panel title={t(language, sharedCopy.completed)} subtitle={language === "zh-CN" ? "完成后会从事件池待办中退出，但仍然能在这里回看。" : "Completed items leave the shared queue but stay visible here."}>
           <div className="space-y-3">
             {completedTasks.length === 0 ? (
               <div className="rounded-[24px] border border-dashed border-[color:var(--border-soft)] p-5 text-sm text-[color:var(--text-soft)]">{t(language, sharedCopy.noPending)}</div>

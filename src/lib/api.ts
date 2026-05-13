@@ -42,8 +42,8 @@ export const backendApi = {
     id: string;
     title: string;
     description?: string;
-    moduleType: "event" | "social";
     categoryId: string;
+    personId?: string;
     status: "pending" | "completed" | "cancelled";
     priority: "low" | "medium" | "high";
     timeType: "exact_time" | "relative_time" | "long_term" | "range_time";
