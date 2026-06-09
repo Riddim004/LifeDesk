@@ -24,6 +24,7 @@ export default function EventTaskPage() {
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [status, setStatus] = useState<"pending" | "completed" | "cancelled">("pending");
   const [dueAt, setDueAt] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!task) {
@@ -64,17 +65,42 @@ export default function EventTaskPage() {
     );
   }
 
-  const handleSave = () => {
-    updateTask(task.id, {
-      title,
-      description,
-      categoryId,
-      personId: personId || undefined,
-      priority,
-      status,
-      dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
-      remindAt: dueAt ? new Date(dueAt).toISOString() : undefined,
-    });
+  const handleSave = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateTask(task.id, {
+        title,
+        description,
+        categoryId,
+        personId: personId || undefined,
+        priority,
+        status,
+        dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+        remindAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const saved = await completeTask(task.id);
+      if (saved) {
+        navigate(`/events/${categoryId}`);
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -180,20 +206,19 @@ export default function EventTaskPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  completeTask(task.id);
-                  navigate(`/events/${categoryId}`);
-                }}
+                onClick={() => void handleComplete()}
+                disabled={isSaving}
                 className="rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_var(--accent-shadow)]"
               >
                 {language === "zh-CN" ? "点掉这个事件" : "Complete and Clear"}
               </button>
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => void handleSave()}
+                disabled={isSaving}
                 className="rounded-full border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-5 py-3 text-sm font-semibold text-[color:var(--text-strong)]"
               >
-                {language === "zh-CN" ? "保存修改" : "Save Changes"}
+                {isSaving ? (language === "zh-CN" ? "保存中..." : "Saving...") : language === "zh-CN" ? "保存修改" : "Save Changes"}
               </button>
               <button
                 type="button"

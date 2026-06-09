@@ -19,6 +19,7 @@ export default function EventCategoryPage() {
   const [description, setDescription] = useState("");
   const [personId, setPersonId] = useState("");
   const [dueAt, setDueAt] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const label = useMemo(() => {
     if (categoryId in eventLabels) {
@@ -27,24 +28,34 @@ export default function EventCategoryPage() {
     return category?.name || categoryId;
   }, [category?.name, categoryId, language]);
 
-  const handleCreateTask = () => {
-    if (!title.trim()) {
+  const handleCreateTask = async () => {
+    if (!title.trim() || isSubmitting) {
       return;
     }
 
-    createTask({
-      categoryId,
-      personId: personId || undefined,
-      title: title.trim(),
-      description: description.trim() || undefined,
-      dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
-    });
+    setIsSubmitting(true);
 
-    setTitle("");
-    setDescription("");
-    setPersonId("");
-    setDueAt("");
-    setIsCreateOpen(false);
+    try {
+      const taskId = await createTask({
+        categoryId,
+        personId: personId || undefined,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+      });
+
+      if (!taskId) {
+        return;
+      }
+
+      setTitle("");
+      setDescription("");
+      setPersonId("");
+      setDueAt("");
+      setIsCreateOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,10 +123,11 @@ export default function EventCategoryPage() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={handleCreateTask}
+                  onClick={() => void handleCreateTask()}
+                  disabled={isSubmitting}
                   className="rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_var(--accent-shadow)]"
                 >
-                  {language === "zh-CN" ? "保存事件" : "Save Event"}
+                  {isSubmitting ? (language === "zh-CN" ? "保存中..." : "Saving...") : language === "zh-CN" ? "保存事件" : "Save Event"}
                 </button>
                 <button
                   type="button"
@@ -154,7 +166,7 @@ export default function EventCategoryPage() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => completeTask(task.id)}
+                  onClick={() => void completeTask(task.id)}
                   className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] px-4 py-2 text-xs font-semibold text-white shadow-[0_12px_24px_var(--accent-shadow)]"
                 >
                   <CheckCircle2 className="h-4 w-4" />

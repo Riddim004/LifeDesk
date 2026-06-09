@@ -6,6 +6,8 @@ export function AppShell() {
   const language = useLifeDeskStore((state) => state.settings.language);
   const backendReady = useLifeDeskStore((state) => state.backendReady);
   const backendError = useLifeDeskStore((state) => state.backendError);
+  const syncError = useLifeDeskStore((state) => state.syncError);
+  const clearSyncError = useLifeDeskStore((state) => state.clearSyncError);
   const isConnecting = !backendReady && !backendError;
 
   return (
@@ -16,15 +18,27 @@ export function AppShell() {
           {isConnecting ? (
             <div className="mb-4 rounded-2xl border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--text-strong)]">
               {language === "zh-CN"
-                ? "正在连接本地后端，数据会以 runtime-data/lifedesk.sqlite 为准。"
-                : "Connecting to the local backend. The source of truth is runtime-data/lifedesk.sqlite."}
+                ? "正在连接本地后端，数据会以父文件夹中的 lifedesk.sqlite 为准。"
+                : "Connecting to the local backend. The source of truth is lifedesk.sqlite in the parent folder."}
             </div>
           ) : null}
           {backendError ? (
             <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {language === "zh-CN"
-                ? "本地后端未连接成功，当前界面仅展示内置演示数据。请先运行 npm run dev:full 或 npm run start。"
-                : "The local backend is unavailable, so the app is currently showing built-in demo data only. Run npm run dev:full or npm run start first."}
+                ? "本地后端未连接成功，当前界面不会读取数据库数据。请先运行 npm run dev:full 或 npm run start。"
+                : "The local backend is unavailable, so the app cannot read database data right now. Run npm run dev:full or npm run start first."}
+            </div>
+          ) : null}
+          {syncError ? (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <span>{syncError}</span>
+              <button
+                type="button"
+                onClick={clearSyncError}
+                className="rounded-full border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-800"
+              >
+                {language === "zh-CN" ? "知道了" : "Dismiss"}
+              </button>
             </div>
           ) : null}
           <Outlet />

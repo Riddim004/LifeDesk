@@ -24,3 +24,5 @@ runtime-data
 *.njsproj
 *.sln
 *.sw?
+__pycache__/
+*.py[cod]

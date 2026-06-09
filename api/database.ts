@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { categories, defaultSettings, moneyRecords, persons, tasks } from "../src/data/seed";
+import { categories, defaultSettings } from "../src/data/seed";
 import type { Category, LifeDeskData, MoneyRecord, Person, Task, UserSettings } from "../src/types/models";
 
 const userId = "solo-user";
@@ -9,9 +9,9 @@ const userId = "solo-user";
 const createInitialState = (): LifeDeskData => ({
   settings: structuredClone(defaultSettings),
   categories: structuredClone(categories),
-  persons: structuredClone(persons),
-  tasks: structuredClone(tasks),
-  moneyRecords: structuredClone(moneyRecords),
+  persons: [],
+  tasks: [],
+  moneyRecords: [],
 });
 
 type CategoryRow = Omit<Category, "parentId" | "icon" | "color"> & {
@@ -357,19 +357,6 @@ function insertState(database: DatabaseSync, state: LifeDeskData) {
   }
 }
 
-function readLegacyJsonState(legacyDataFile: string): LifeDeskData | null {
-  if (!fs.existsSync(legacyDataFile)) {
-    return null;
-  }
-
-  try {
-    const raw = fs.readFileSync(legacyDataFile, "utf-8");
-    return JSON.parse(raw) as LifeDeskData;
-  } catch {
-    return null;
-  }
-}
-
 export interface LifeDeskDatabase {
   databaseFile: string;
   bootstrap: () => LifeDeskData;
@@ -387,19 +374,47 @@ export interface LifeDeskDatabase {
   reset: () => LifeDeskData;
 }
 
-export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
-  const runtimeDir = path.join(projectRoot, "runtime-data");
-  const databaseFile = path.join(runtimeDir, "lifedesk.sqlite");
-  const legacyDataFile = path.join(runtimeDir, "lifedesk.json");
+function migrateDatabaseFiles(projectRoot: string, databaseFile: string) {
+  const legacyRuntimeDir = path.join(projectRoot, "runtime-data");
+  const legacyDatabaseFile = path.join(legacyRuntimeDir, "lifedesk.sqlite");
 
-  fs.mkdirSync(runtimeDir, { recursive: true });
+  if (fs.existsSync(databaseFile) || !fs.existsSync(legacyDatabaseFile)) {
+    return;
+  }
+
+  const legacyRelatedFiles = [
+    legacyDatabaseFile,
+    `${legacyDatabaseFile}-shm`,
+    `${legacyDatabaseFile}-wal`,
+  ];
+  const nextRelatedFiles = [
+    databaseFile,
+    `${databaseFile}-shm`,
+    `${databaseFile}-wal`,
+  ];
+
+  legacyRelatedFiles.forEach((sourceFile, index) => {
+    if (!fs.existsSync(sourceFile)) {
+      return;
+    }
+
+    fs.renameSync(sourceFile, nextRelatedFiles[index]);
+  });
+}
+
+export function createLifeDeskDatabase(projectRoot: string): LifeDeskDatabase {
+  const dataRoot = path.resolve(projectRoot, "..");
+  const databaseFile = path.join(dataRoot, "lifedesk.sqlite");
+
+  fs.mkdirSync(dataRoot, { recursive: true });
+  migrateDatabaseFiles(projectRoot, databaseFile);
 
   const database = new DatabaseSync(databaseFile);
   createSchema(database);
 
   const countRow = database.prepare("SELECT COUNT(*) AS count FROM settings").get() as { count: number };
   if (countRow.count === 0) {
-    const initialState = readLegacyJsonState(legacyDataFile) ?? createInitialState();
+    const initialState = createInitialState();
     runInTransaction(database, () => {
       clearData(database);
       insertState(database, initialState);

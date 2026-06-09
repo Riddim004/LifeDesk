@@ -13,12 +13,14 @@ interface LifeDeskState {
   moneyRecords: MoneyRecord[];
   backendReady: boolean;
   backendError: string | null;
+  syncError: string | null;
   initialize: () => Promise<void>;
-  setLanguage: (language: UserSettings["language"]) => void;
-  setThemeMode: (mode: ThemeMode) => void;
-  setThemeColor: (color: ThemeColor) => void;
-  setFontSize: (size: UserSettings["fontSize"]) => void;
-  setNotificationsEnabled: (value: boolean) => void;
+  clearSyncError: () => void;
+  setLanguage: (language: UserSettings["language"]) => Promise<void>;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  setThemeColor: (color: ThemeColor) => Promise<void>;
+  setFontSize: (size: UserSettings["fontSize"]) => Promise<void>;
+  setNotificationsEnabled: (value: boolean) => Promise<void>;
   createPerson: (payload: {
     categoryId: "family" | "friends" | "online";
     name: string;
@@ -26,7 +28,7 @@ interface LifeDeskState {
     note?: string;
     birthday?: string;
     contactPreference?: string;
-  }) => string;
+  }) => Promise<string | null>;
   createTask: (payload: {
     categoryId: string;
     personId?: string;
@@ -34,13 +36,21 @@ interface LifeDeskState {
     description?: string;
     priority?: "low" | "medium" | "high";
     dueAt?: string;
-  }) => string;
-  completeTask: (taskId: string) => void;
-  updateTask: (taskId: string, payload: Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt">>) => void;
-  resetDemo: () => void;
+  }) => Promise<string | null>;
+  completeTask: (taskId: string) => Promise<boolean>;
+  updateTask: (taskId: string, payload: Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt">>) => Promise<boolean>;
+  resetDemo: () => Promise<void>;
 }
 
 export type DemoState = LifeDeskData;
+
+export const createEmptyState = (): DemoState => ({
+  settings: structuredClone(defaultSettings),
+  categories: structuredClone(categories),
+  persons: [],
+  tasks: [],
+  moneyRecords: [],
+});
 
 export const createDemoState = (): DemoState => ({
   settings: structuredClone(defaultSettings),
@@ -50,12 +60,18 @@ export const createDemoState = (): DemoState => ({
   moneyRecords: structuredClone(moneyRecords),
 });
 
-const baseState = createDemoState();
+const baseState = createEmptyState();
 
-export const useLifeDeskStore = create<LifeDeskState>((set) => ({
-  ...createDemoState(),
+const getSyncErrorMessage = (language: UserSettings["language"]) =>
+  language === "zh-CN"
+    ? "本次修改没有成功保存到本地数据库，请确认启动程序仍在运行。"
+    : "This change was not saved to the local database. Make sure the launcher is still running.";
+
+export const useLifeDeskStore = create<LifeDeskState>((set, get) => ({
+  ...createEmptyState(),
   backendReady: false,
   backendError: null,
+  syncError: null,
   initialize: async () => {
     try {
       const data = await backendApi.getBootstrap();
@@ -63,6 +79,7 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
         ...data,
         backendReady: true,
         backendError: null,
+        syncError: null,
       });
     } catch (error) {
       set({
@@ -71,27 +88,80 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
       });
     }
   },
-  setLanguage: (language) => {
-    set((state) => ({ settings: { ...state.settings, language } }));
-    void backendApi.updateSettings({ language }).catch(() => undefined);
+  clearSyncError: () => {
+    set({ syncError: null });
   },
-  setThemeMode: (themeMode) => {
-    set((state) => ({ settings: { ...state.settings, themeMode } }));
-    void backendApi.updateSettings({ themeMode }).catch(() => undefined);
+  setLanguage: async (language) => {
+    const state = get();
+    if (!state.backendReady) {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return;
+    }
+
+    try {
+      const settings = await backendApi.updateSettings({ language });
+      set({ settings, syncError: null });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
   },
-  setThemeColor: (themeColor) => {
-    set((state) => ({ settings: { ...state.settings, themeColor } }));
-    void backendApi.updateSettings({ themeColor }).catch(() => undefined);
+  setThemeMode: async (themeMode) => {
+    const state = get();
+    if (!state.backendReady) {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return;
+    }
+
+    try {
+      const settings = await backendApi.updateSettings({ themeMode });
+      set({ settings, syncError: null });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
   },
-  setFontSize: (fontSize) => {
-    set((state) => ({ settings: { ...state.settings, fontSize } }));
-    void backendApi.updateSettings({ fontSize }).catch(() => undefined);
+  setThemeColor: async (themeColor) => {
+    const state = get();
+    if (!state.backendReady) {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return;
+    }
+
+    try {
+      const settings = await backendApi.updateSettings({ themeColor });
+      set({ settings, syncError: null });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
   },
-  setNotificationsEnabled: (notificationsEnabled) => {
-    set((state) => ({ settings: { ...state.settings, notificationsEnabled } }));
-    void backendApi.updateSettings({ notificationsEnabled }).catch(() => undefined);
+  setFontSize: async (fontSize) => {
+    const state = get();
+    if (!state.backendReady) {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return;
+    }
+
+    try {
+      const settings = await backendApi.updateSettings({ fontSize });
+      set({ settings, syncError: null });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
   },
-  createPerson: (payload) => {
+  setNotificationsEnabled: async (notificationsEnabled) => {
+    const state = get();
+    if (!state.backendReady) {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return;
+    }
+
+    try {
+      const settings = await backendApi.updateSettings({ notificationsEnabled });
+      set({ settings, syncError: null });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
+  },
+  createPerson: async (payload) => {
     const now = new Date().toISOString();
     const personId = `person-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const nextPerson: Person = {
@@ -109,18 +179,35 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
       updatedAt: now,
     };
 
-    set((state) => ({
-      persons: [
-        ...state.persons,
-        nextPerson,
-      ],
-    }));
+    const state = get();
 
-    void backendApi.createPerson({ id: personId, ...payload }).catch(() => undefined);
+    if (!state.backendReady) {
+      set((current) => ({
+        persons: [
+          ...current.persons,
+          nextPerson,
+        ],
+        syncError: null,
+      }));
+      return personId;
+    }
 
-    return personId;
+    try {
+      const savedPerson = await backendApi.createPerson({ id: personId, ...payload });
+      set((current) => ({
+        persons: [
+          ...current.persons,
+          savedPerson,
+        ],
+        syncError: null,
+      }));
+      return savedPerson.id;
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return null;
+    }
   },
-  createTask: (payload) => {
+  createTask: async (payload) => {
     const now = new Date().toISOString();
     const taskId = `task-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const nextTask: Task = {
@@ -140,96 +227,154 @@ export const useLifeDeskStore = create<LifeDeskState>((set) => ({
       updatedAt: now,
     };
 
-    set((state) => ({
-      tasks: [
-        ...state.tasks,
-        nextTask,
-      ],
-    }));
+    const state = get();
 
-    void backendApi.createTask({
-      id: nextTask.id,
-      title: nextTask.title,
-      description: nextTask.description,
-      categoryId: nextTask.categoryId,
-      personId: nextTask.personId,
-      status: nextTask.status,
-      priority: nextTask.priority,
-      timeType: nextTask.timeType,
-      dueAt: nextTask.dueAt,
-      remindAt: nextTask.remindAt,
-      isDeleted: nextTask.isDeleted,
-      completedAt: nextTask.completedAt,
-      createdAt: nextTask.createdAt,
-    }).catch(() => undefined);
+    if (!state.backendReady) {
+      set((current) => ({
+        tasks: [
+          ...current.tasks,
+          nextTask,
+        ],
+        syncError: null,
+      }));
+      return taskId;
+    }
 
-    return taskId;
-  },
-  completeTask: (taskId) => {
-    const completedAt = new Date().toISOString();
-    set((state) => ({
-      tasks: state.tasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status: "completed",
-              isDeleted: true,
-              completedAt,
-              updatedAt: completedAt,
-            }
-          : task,
-      ),
-    }));
-    void backendApi.completeTask(taskId).catch(() => undefined);
-  },
-  updateTask: (taskId, payload) => {
-    let nextTaskPayload:
-      | Partial<Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">>
-      | undefined;
-    set((state) => ({
-      tasks: state.tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task;
-        }
-
-        const nextStatus = payload.status ?? task.status;
-        const isCompleted = nextStatus === "completed";
-        nextTaskPayload = {
-          ...payload,
-          status: nextStatus,
-          isDeleted: false,
-          completedAt: isCompleted ? task.completedAt ?? new Date().toISOString() : undefined,
-        };
-
-        return {
-          ...task,
-          ...payload,
-          status: nextStatus,
-          isDeleted: false,
-          completedAt: isCompleted ? task.completedAt ?? new Date().toISOString() : undefined,
-          updatedAt: new Date().toISOString(),
-        };
-      }),
-    }));
-    if (nextTaskPayload) {
-      void backendApi.updateTask(taskId, nextTaskPayload).catch(() => undefined);
+    try {
+      const savedTask = await backendApi.createTask({
+        id: nextTask.id,
+        title: nextTask.title,
+        description: nextTask.description,
+        categoryId: nextTask.categoryId,
+        personId: nextTask.personId,
+        status: nextTask.status,
+        priority: nextTask.priority,
+        timeType: nextTask.timeType,
+        dueAt: nextTask.dueAt,
+        remindAt: nextTask.remindAt,
+        isDeleted: nextTask.isDeleted,
+        completedAt: nextTask.completedAt,
+        createdAt: nextTask.createdAt,
+      });
+      set((current) => ({
+        tasks: [
+          ...current.tasks,
+          savedTask,
+        ],
+        syncError: null,
+      }));
+      return savedTask.id;
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return null;
     }
   },
-  resetDemo: () => {
-    set({
-      ...createDemoState(),
-      backendReady: true,
-      backendError: null,
-    });
-    void backendApi.resetData()
-      .then((data) =>
-        set({
-          ...data,
-          backendReady: true,
-          backendError: null,
-        }),
-      )
-      .catch(() => undefined);
+  completeTask: async (taskId) => {
+    const state = get();
+    const completedAt = new Date().toISOString();
+
+    if (!state.backendReady) {
+      set((current) => ({
+        tasks: current.tasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: "completed",
+                isDeleted: true,
+                completedAt,
+                updatedAt: completedAt,
+              }
+            : task,
+        ),
+        syncError: null,
+      }));
+      return true;
+    }
+
+    try {
+      const savedTask = await backendApi.completeTask(taskId);
+      set((current) => ({
+        tasks: current.tasks.map((task) => (task.id === taskId ? savedTask : task)),
+        syncError: null,
+      }));
+      return true;
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return false;
+    }
+  },
+  updateTask: async (taskId, payload) => {
+    const state = get();
+    const currentTask = state.tasks.find((task) => task.id === taskId);
+
+    if (!currentTask) {
+      return false;
+    }
+
+    const nextStatus = payload.status ?? currentTask.status;
+    const isCompleted = nextStatus === "completed";
+    const nextTaskPayload: Partial<
+      Pick<Task, "title" | "description" | "categoryId" | "personId" | "priority" | "status" | "dueAt" | "remindAt" | "isDeleted" | "completedAt">
+    > = {
+      ...payload,
+      status: nextStatus,
+      isDeleted: false,
+      completedAt: isCompleted ? currentTask.completedAt ?? new Date().toISOString() : undefined,
+    };
+
+    if (!state.backendReady) {
+      set((current) => ({
+        tasks: current.tasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                ...payload,
+                status: nextStatus,
+                isDeleted: false,
+                completedAt: isCompleted ? task.completedAt ?? new Date().toISOString() : undefined,
+                updatedAt: new Date().toISOString(),
+              }
+            : task,
+        ),
+        syncError: null,
+      }));
+      return true;
+    }
+
+    try {
+      const savedTask = await backendApi.updateTask(taskId, nextTaskPayload);
+      set((current) => ({
+        tasks: current.tasks.map((task) => (task.id === taskId ? savedTask : task)),
+        syncError: null,
+      }));
+      return true;
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+      return false;
+    }
+  },
+  resetDemo: async () => {
+    const state = get();
+
+    if (!state.backendReady) {
+      set({
+        ...createEmptyState(),
+        syncError: null,
+      });
+      return;
+    }
+
+    try {
+      const data = await backendApi.resetData();
+      set({
+        ...data,
+        backendReady: true,
+        backendError: null,
+        syncError: null,
+      });
+    } catch {
+      set({ syncError: getSyncErrorMessage(state.settings.language) });
+    }
   },
 }));
 

@@ -70,6 +70,20 @@ describe("事件模块编辑能力", () => {
     expect(studyTasks.some((task) => task.title === "补做实验报告")).toBe(true);
   });
 
+  it("事件工作台保留近期事件，并显示事件关系画布", () => {
+    render(
+      <MemoryRouter>
+        <EventsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("今日重点")).not.toBeInTheDocument();
+    expect(screen.getAllByText("事件关系画布").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("近期事件").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("准备英语考试大纲").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("学业").length).toBeGreaterThan(0);
+  });
+
   it("支持在事件分类页快速点掉已有事件", () => {
     render(
       <MemoryRouter initialEntries={["/events/study"]}>

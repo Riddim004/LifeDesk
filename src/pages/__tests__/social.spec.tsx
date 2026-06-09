@@ -54,7 +54,7 @@ describe("人际模块主视图", () => {
     expect(people.some((person) => person.name === "表姐")).toBe(true);
   });
 
-  it("重置演示数据后会恢复默认的人际统计", () => {
+  it("清空本地数据后会移除已有的人际记录", () => {
     useLifeDeskStore.getState().createPerson({
       categoryId: "family",
       name: "联调人物",
@@ -64,6 +64,6 @@ describe("人际模块主视图", () => {
     useLifeDeskStore.getState().resetDemo();
 
     expect(getPeopleByRelation(useLifeDeskStore.getState(), "family").some((person) => person.name === "联调人物")).toBe(false);
-    expect(getPendingCountByRelation(useLifeDeskStore.getState(), "family")).toBe(3);
+    expect(getPendingCountByRelation(useLifeDeskStore.getState(), "family")).toBe(0);
   });
 });

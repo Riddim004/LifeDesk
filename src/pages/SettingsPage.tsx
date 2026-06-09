@@ -32,7 +32,7 @@ export default function SettingsPage() {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setLanguage(value)}
+                    onClick={() => void setLanguage(value)}
                     className={[
                       "rounded-full px-4 py-2 text-sm font-medium transition",
                       settings.language === value ? "bg-[color:var(--accent)] text-white" : "bg-[color:var(--panel-muted)] text-[color:var(--text-soft)]",
@@ -51,7 +51,7 @@ export default function SettingsPage() {
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setThemeMode(mode)}
+                    onClick={() => void setThemeMode(mode)}
                     className={[
                       "rounded-full px-4 py-2 text-sm font-medium transition",
                       settings.themeMode === mode ? "bg-[color:var(--accent)] text-white" : "bg-[color:var(--panel-muted)] text-[color:var(--text-soft)]",
@@ -70,7 +70,7 @@ export default function SettingsPage() {
                   <button
                     key={size}
                     type="button"
-                    onClick={() => setFontSize(size)}
+                    onClick={() => void setFontSize(size)}
                     className={[
                       "rounded-full px-4 py-2 text-sm font-medium transition",
                       settings.fontSize === size ? "bg-[color:var(--accent)] text-white" : "bg-[color:var(--panel-muted)] text-[color:var(--text-soft)]",
@@ -94,7 +94,7 @@ export default function SettingsPage() {
                   <button
                     key={color}
                     type="button"
-                    onClick={() => setThemeColor(color)}
+                    onClick={() => void setThemeColor(color)}
                     className={[
                       "rounded-[22px] border p-4 text-left transition",
                       settings.themeColor === color ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border-soft)] bg-[color:var(--panel-muted)]",
@@ -110,17 +110,17 @@ export default function SettingsPage() {
               <p className="text-sm font-semibold text-[color:var(--text-strong)]">{t(settings.language, sharedCopy.notifications)}</p>
               <label className="mt-3 flex items-center justify-between rounded-[22px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-4 py-4 text-sm text-[color:var(--text-soft)]">
                 <span>{settings.language === "zh-CN" ? "开启站内提醒" : "Enable reminders"}</span>
-                <input type="checkbox" checked={settings.notificationsEnabled} onChange={(event) => setNotificationsEnabled(event.target.checked)} />
+                <input type="checkbox" checked={settings.notificationsEnabled} onChange={(event) => void setNotificationsEnabled(event.target.checked)} />
               </label>
             </div>
 
             <button
               type="button"
-              onClick={resetDemo}
+              onClick={() => void resetDemo()}
               className="inline-flex items-center gap-2 rounded-full bg-[color:var(--panel-muted)] px-4 py-2 text-sm font-semibold text-[color:var(--text-strong)] transition hover:border-[color:var(--accent-border)]"
             >
               <RefreshCcw className="h-4 w-4" />
-              {settings.language === "zh-CN" ? "重置演示数据" : "Reset demo data"}
+              {settings.language === "zh-CN" ? "清空本地数据" : "Clear local data"}
             </button>
           </div>
         </div>

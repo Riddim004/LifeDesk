@@ -20,6 +20,7 @@ export default function SocialPage() {
   const [nickname, setNickname] = useState("");
   const [relationId, setRelationId] = useState<"family" | "friends" | "online">("family");
   const [note, setNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
     setName("");
@@ -28,21 +29,31 @@ export default function SocialPage() {
     setNote("");
   };
 
-  const handleCreatePerson = () => {
-    if (!name.trim()) {
+  const handleCreatePerson = async () => {
+    if (!name.trim() || isSubmitting) {
       return;
     }
 
-    createPerson({
-      categoryId: relationId,
-      name: name.trim(),
-      nickname: nickname.trim() || undefined,
-      note: note.trim() || undefined,
-    });
+    setIsSubmitting(true);
 
-    resetForm();
-    setIsCreateOpen(false);
-    navigate(`/social/${relationId}`);
+    try {
+      const personId = await createPerson({
+        categoryId: relationId,
+        name: name.trim(),
+        nickname: nickname.trim() || undefined,
+        note: note.trim() || undefined,
+      });
+
+      if (!personId) {
+        return;
+      }
+
+      resetForm();
+      setIsCreateOpen(false);
+      navigate(`/social/${relationId}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -133,10 +144,11 @@ export default function SocialPage() {
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={handleCreatePerson}
+                    onClick={() => void handleCreatePerson()}
+                    disabled={isSubmitting}
                     className="rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_var(--accent-shadow)]"
                   >
-                    {language === "zh-CN" ? "保存并进入" : "Save and Open"}
+                    {isSubmitting ? (language === "zh-CN" ? "保存中..." : "Saving...") : language === "zh-CN" ? "保存并进入" : "Save and Open"}
                   </button>
                   <button
                     type="button"
