@@ -181,3 +181,33 @@ button {
   cursor: pointer;
   border: none;
 }
+
+.app-shell-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.app-shell-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-shell-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-shell-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  background-clip: padding-box;
+}
+
+.app-shell-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  background-clip: padding-box;
+}
+
+.app-shell-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  background-clip: padding-box;
+}

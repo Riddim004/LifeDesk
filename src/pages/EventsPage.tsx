@@ -31,6 +31,8 @@ type DraggingNode = {
   offsetX: number;
   offsetY: number;
   pointerId: number;
+  startClientX: number;
+  startClientY: number;
 };
 
 type NodePosition = {
@@ -196,6 +198,9 @@ export default function EventsPage() {
   const categoryPositionsRef = useRef<Record<string, NodePosition>>({});
   const taskPositionsRef = useRef<Record<string, NodePosition>>({});
   const draggingNodeRef = useRef<DraggingNode | null>(null);
+  const draggedNodeKeyRef = useRef<string | null>(null);
+  const dragMovedRef = useRef(false);
+  const suppressedClickNodeKeyRef = useRef<string | null>(null);
   const velocityRef = useRef<{
     category: Record<string, NodePosition>;
     task: Record<string, NodePosition>;
@@ -314,6 +319,8 @@ export default function EventsPage() {
 
   const selectedTask = selectedNode?.type === "task" ? canvasTasks.find((task) => task.id === selectedNode.id) : undefined;
   const highlightedCategoryId = selectedNode?.type === "category" ? selectedNode.id : selectedTask?.categoryId;
+  const isCategorySelected = (groupId: string) => selectedNode?.type === "category" && selectedNode.id === groupId;
+  const isTaskSelected = (taskId: string) => selectedNode?.type === "task" && selectedNode.id === taskId;
   const isCategoryHighlighted = (groupId: string) =>
     !selectedNode || highlightedCategoryId === groupId;
 
@@ -337,6 +344,29 @@ export default function EventsPage() {
     return highlighted || hoveredNodeKey === nodeKey;
   };
 
+  const handleNodeActivate = (
+    node: Exclude<CanvasSelection, null>,
+    destination: string,
+  ) => {
+    const nodeKey = `${node.type}:${node.id}`;
+
+    if (suppressedClickNodeKeyRef.current === nodeKey) {
+      suppressedClickNodeKeyRef.current = null;
+      return;
+    }
+
+    if (selectedNode?.type === node.type && selectedNode.id === node.id) {
+      navigate(destination);
+      return;
+    }
+
+    setSelectedNode(node);
+  };
+
+  const handleNodeOpen = (destination: string) => {
+    navigate(destination);
+  };
+
   const startDragging = (
     event: React.PointerEvent<HTMLButtonElement>,
     node: { type: "category" | "task"; id: string; width: number; height: number; position: NodePosition },
@@ -349,6 +379,8 @@ export default function EventsPage() {
       return;
     }
 
+    draggedNodeKeyRef.current = `${node.type}:${node.id}`;
+    dragMovedRef.current = false;
     setDraggingNode({
       type: node.type,
       id: node.id,
@@ -357,12 +389,21 @@ export default function EventsPage() {
       offsetX: event.clientX - canvasRect.left - node.position.x,
       offsetY: event.clientY - canvasRect.top - node.position.y,
       pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
     });
   };
 
   const updateDraggedNodePosition = (clientX: number, clientY: number, currentDragging: DraggingNode) => {
     if (!canvasRootRef.current) {
       return;
+    }
+
+    if (!dragMovedRef.current) {
+      const pointerDistance = Math.hypot(clientX - currentDragging.startClientX, clientY - currentDragging.startClientY);
+      if (pointerDistance > 4) {
+        dragMovedRef.current = true;
+      }
     }
 
     const canvasRect = canvasRootRef.current.getBoundingClientRect();
@@ -388,6 +429,11 @@ export default function EventsPage() {
   };
 
   const stopDragging = () => {
+    if (dragMovedRef.current && draggedNodeKeyRef.current) {
+      suppressedClickNodeKeyRef.current = draggedNodeKeyRef.current;
+    }
+    draggedNodeKeyRef.current = null;
+    dragMovedRef.current = false;
     setDraggingNode(null);
   };
 
@@ -729,7 +775,7 @@ export default function EventsPage() {
         >
           {taskNodePositions.length > 0 ? (
             <div
-              className="overflow-auto rounded-[28px] border border-[color:var(--border-soft)] bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0)),var(--panel-muted)]"
+              className="overflow-hidden rounded-[28px] border border-[color:var(--border-soft)] bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0)),var(--panel-muted)]"
               style={{ height: `${CANVAS_HEIGHT}px` }}
             >
               <div
@@ -754,16 +800,28 @@ export default function EventsPage() {
                     const highlighted = isTaskHighlighted(task);
 
                     return (
-                      <line
-                        key={`line-${task.id}`}
-                        x1={categoryNode.x + CATEGORY_NODE_DIAMETER / 2}
-                        y1={categoryNode.y + CATEGORY_NODE_DIAMETER / 2}
-                        x2={task.x + TASK_NODE_DIAMETER / 2}
-                        y2={task.y + TASK_NODE_DIAMETER / 2}
-                        stroke={tone.stroke}
-                        strokeOpacity={highlighted ? 0.72 : 0.18}
-                        strokeWidth={highlighted ? 2.8 : 1.4}
-                      />
+                      <g key={`line-${task.id}`}>
+                        {highlighted ? (
+                          <line
+                            x1={categoryNode.x + CATEGORY_NODE_DIAMETER / 2}
+                            y1={categoryNode.y + CATEGORY_NODE_DIAMETER / 2}
+                            x2={task.x + TASK_NODE_DIAMETER / 2}
+                            y2={task.y + TASK_NODE_DIAMETER / 2}
+                            stroke={tone.stroke}
+                            strokeOpacity={0.22}
+                            strokeWidth={10}
+                          />
+                        ) : null}
+                        <line
+                          x1={categoryNode.x + CATEGORY_NODE_DIAMETER / 2}
+                          y1={categoryNode.y + CATEGORY_NODE_DIAMETER / 2}
+                          x2={task.x + TASK_NODE_DIAMETER / 2}
+                          y2={task.y + TASK_NODE_DIAMETER / 2}
+                          stroke={tone.stroke}
+                          strokeOpacity={highlighted ? 0.95 : 0.3}
+                          strokeWidth={highlighted ? 3.2 : 1.8}
+                        />
+                      </g>
                     );
                   })}
                 </svg>
@@ -771,6 +829,7 @@ export default function EventsPage() {
                 {categoryNodePositions.map((group) => {
                   const tone = categoryToneMap[group.id] ?? categoryToneMap.life;
                   const highlighted = isCategoryHighlighted(group.id);
+                  const selected = isCategorySelected(group.id);
                   const nodeKey = `category:${group.id}`;
                   const emphasized = isNodeEmphasized(nodeKey, highlighted);
 
@@ -788,11 +847,16 @@ export default function EventsPage() {
                       <div
                         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[calc(100%+12px)] whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium shadow-[0_10px_24px_rgba(0,0,0,0.08)] backdrop-blur transition"
                         style={{
-                          borderColor: emphasized ? tone.border : "var(--border-soft)",
-                          backgroundColor: highlighted ? tone.soft : "rgba(255,255,255,0.92)",
-                          color: "var(--text-strong)",
-                          opacity: selectedNode && !highlighted && hoveredNodeKey !== nodeKey ? 0.38 : 1,
+                          borderColor: selected ? tone.stroke : hoveredNodeKey === nodeKey ? tone.border : "rgba(255,255,255,0.28)",
+                          backgroundColor: selected ? "rgba(26,32,46,0.9)" : "rgba(20,24,34,0.72)",
+                          color: selected ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.92)",
+                          boxShadow: selected
+                            ? `0 0 0 1px ${tone.border}, 0 0 14px ${tone.soft}, 0 8px 22px rgba(0,0,0,0.18)`
+                            : hoveredNodeKey === nodeKey
+                              ? "0 10px 28px rgba(0,0,0,0.14)"
+                              : "0 10px 24px rgba(0,0,0,0.08)",
                           transform: emphasized ? "translate(-50%, calc(-100% - 12px)) scale(1.03)" : "translate(-50%, calc(-100% - 12px)) scale(1)",
+                          backdropFilter: selected ? "blur(18px)" : "blur(14px)",
                         }}
                       >
                         {t(language, eventLabels[group.id])}
@@ -800,7 +864,7 @@ export default function EventsPage() {
                       <button
                         type="button"
                         aria-label={t(language, eventLabels[group.id])}
-                        title={language === "zh-CN" ? "单击高亮，双击打开分类" : "Click to focus, double-click to open"}
+                        title={language === "zh-CN" ? "单击高亮，双击打开分类；高亮后再点一次可直接进入" : "Click to focus, double-click to open; click again when focused to enter"}
                         onPointerDown={(event) =>
                           startDragging(event, {
                             type: "category",
@@ -810,21 +874,21 @@ export default function EventsPage() {
                             position: { x: group.x, y: group.y },
                           })
                         }
-                        onClick={() =>
-                          setSelectedNode((current) =>
-                            current?.type === "category" && current.id === group.id ? null : { type: "category", id: group.id },
-                          )
-                        }
-                        onDoubleClick={() => navigate(`/events/${group.id}`)}
+                        onClick={() => handleNodeActivate({ type: "category", id: group.id }, `/events/${group.id}`)}
+                        onDoubleClick={() => handleNodeOpen(`/events/${group.id}`)}
                         className="rounded-full border shadow-[0_10px_24px_rgba(0,0,0,0.12)] transition active:cursor-grabbing"
                         style={{
                           width: `${CATEGORY_NODE_DIAMETER}px`,
                           height: `${CATEGORY_NODE_DIAMETER}px`,
-                          borderColor: emphasized ? tone.border : "rgba(255,255,255,0.65)",
+                          borderColor: selected ? tone.stroke : emphasized ? tone.border : "rgba(255,255,255,0.65)",
                           backgroundColor: tone.stroke,
-                          boxShadow: emphasized ? `0 0 0 6px ${tone.soft}, 0 0 30px ${tone.soft}` : `0 0 0 4px ${tone.soft}`,
+                          boxShadow: selected
+                            ? `0 0 0 8px ${tone.soft}, 0 0 22px ${tone.stroke}, 0 0 42px ${tone.soft}`
+                            : emphasized
+                              ? `0 0 0 6px ${tone.soft}, 0 0 30px ${tone.soft}`
+                              : `0 0 0 4px ${tone.soft}`,
                           cursor: draggingNode?.type === "category" && draggingNode.id === group.id ? "grabbing" : "grab",
-                          opacity: selectedNode && !highlighted && hoveredNodeKey !== nodeKey ? 0.38 : 1,
+                          filter: selected ? "brightness(1.18) saturate(1.18)" : undefined,
                         }}
                       />
                     </div>
@@ -834,6 +898,7 @@ export default function EventsPage() {
                 {taskNodePositions.map((task) => {
                   const tone = categoryToneMap[task.categoryId] ?? categoryToneMap.life;
                   const highlighted = isTaskHighlighted(task);
+                  const selected = isTaskSelected(task.id);
                   const nodeKey = `task:${task.id}`;
                   const emphasized = isNodeEmphasized(nodeKey, highlighted);
 
@@ -851,11 +916,16 @@ export default function EventsPage() {
                       <div
                         className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-[calc(100%+14px)] whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium shadow-[0_10px_24px_rgba(0,0,0,0.08)] backdrop-blur transition"
                         style={{
-                          borderColor: emphasized ? tone.border : "var(--border-soft)",
-                          backgroundColor: highlighted ? tone.soft : "rgba(255,255,255,0.92)",
-                          color: "var(--text-strong)",
-                          opacity: selectedNode && !highlighted && hoveredNodeKey !== nodeKey ? 0.34 : 1,
+                          borderColor: selected ? tone.stroke : hoveredNodeKey === nodeKey ? tone.border : "rgba(255,255,255,0.28)",
+                          backgroundColor: selected ? "rgba(26,32,46,0.9)" : "rgba(20,24,34,0.72)",
+                          color: selected ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.92)",
+                          boxShadow: selected
+                            ? `0 0 0 1px ${tone.border}, 0 0 14px ${tone.soft}, 0 8px 22px rgba(0,0,0,0.18)`
+                            : hoveredNodeKey === nodeKey
+                              ? "0 10px 28px rgba(0,0,0,0.14)"
+                              : "0 10px 24px rgba(0,0,0,0.08)",
                           transform: emphasized ? "translate(-50%, calc(-100% - 14px)) scale(1.03)" : "translate(-50%, calc(-100% - 14px)) scale(1)",
+                          backdropFilter: selected ? "blur(18px)" : "blur(14px)",
                         }}
                       >
                         <span>{task.title}</span>
@@ -880,21 +950,21 @@ export default function EventsPage() {
                             position: { x: task.x, y: task.y },
                           })
                         }
-                        onClick={() =>
-                          setSelectedNode((current) =>
-                            current?.type === "task" && current.id === task.id ? null : { type: "task", id: task.id },
-                          )
-                        }
-                        onDoubleClick={() => navigate(`/events/task/${task.id}`)}
+                        onClick={() => handleNodeActivate({ type: "task", id: task.id }, `/events/task/${task.id}`)}
+                        onDoubleClick={() => handleNodeOpen(`/events/task/${task.id}`)}
                         className="rounded-full border transition active:cursor-grabbing"
                         style={{
                           width: `${TASK_NODE_DIAMETER}px`,
                           height: `${TASK_NODE_DIAMETER}px`,
-                          borderColor: emphasized ? tone.border : "rgba(255,255,255,0.65)",
+                          borderColor: selected ? tone.stroke : emphasized ? tone.border : "rgba(255,255,255,0.65)",
                           backgroundColor: tone.stroke,
-                          boxShadow: emphasized ? `0 0 0 5px ${tone.soft}, 0 0 24px ${tone.soft}` : `0 0 0 3px ${tone.soft}`,
+                          boxShadow: selected
+                            ? `0 0 0 7px ${tone.soft}, 0 0 20px ${tone.stroke}, 0 0 34px ${tone.soft}`
+                            : emphasized
+                              ? `0 0 0 5px ${tone.soft}, 0 0 24px ${tone.soft}`
+                              : `0 0 0 3px ${tone.soft}`,
                           cursor: draggingNode?.type === "task" && draggingNode.id === task.id ? "grabbing" : "grab",
-                          opacity: selectedNode && !highlighted && hoveredNodeKey !== nodeKey ? 0.34 : 1,
+                          filter: selected ? "brightness(1.2) saturate(1.2)" : undefined,
                         }}
                       />
                     </div>

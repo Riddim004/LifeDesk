@@ -17,7 +17,7 @@ export function Sidebar() {
   const socialPending = getPeopleBoard(snapshot).reduce((total, entry) => total + entry.pendingCount, 0);
 
   return (
-    <aside className="flex h-full min-h-[720px] w-[280px] flex-col rounded-[32px] border border-[color:var(--border-soft)] bg-[color:var(--sidebar)] p-6 shadow-[var(--panel-shadow)]">
+    <aside className="flex h-full w-[280px] shrink-0 flex-col rounded-[32px] border border-[color:var(--border-soft)] bg-[color:var(--sidebar)] p-6 shadow-[var(--panel-shadow)]">
       <div className="mb-10 flex items-center gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent)] shadow-[0_14px_30px_rgba(21,87,66,0.18)]">
           <UsersRound className="h-7 w-7" />

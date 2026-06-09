@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import EventCategoryPage from "@/pages/EventCategoryPage";
@@ -13,6 +13,7 @@ describe("事件模块编辑能力", () => {
   });
 
   afterEach(() => {
+    cleanup();
     resetDemoState();
   });
 
@@ -82,6 +83,26 @@ describe("事件模块编辑能力", () => {
     expect(screen.getAllByText("近期事件").length).toBeGreaterThan(0);
     expect(screen.getAllByText("准备英语考试大纲").length).toBeGreaterThan(0);
     expect(screen.getAllByText("学业").length).toBeGreaterThan(0);
+  });
+
+  it("画布节点单击先高亮，再次单击进入对应事件", () => {
+    render(
+      <MemoryRouter initialEntries={["/events"]}>
+        <Routes>
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/task/:taskId" element={<div>事件详情占位</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const taskNodeButton = screen.getAllByRole("button", { name: "准备英语考试大纲" })[0];
+
+    fireEvent.click(taskNodeButton);
+    expect(screen.getByRole("button", { name: "取消高亮" })).toBeInTheDocument();
+    expect(screen.queryByText("事件详情占位")).not.toBeInTheDocument();
+
+    fireEvent.click(taskNodeButton);
+    expect(screen.getByText("事件详情占位")).toBeInTheDocument();
   });
 
   it("支持在事件分类页快速点掉已有事件", () => {
